@@ -85,10 +85,12 @@ $resultGroup = mysqli_query($conn, $queryGroup);
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                   <?php
-                    $queryDetail = "SELECT * FROM expenses WHERE DATE(created_at) = '$tgl' ORDER BY id DESC";
-                    $resultDetail = mysqli_query($conn, $queryDetail);
+                    $stmtDetail = $conn->prepare("SELECT * FROM expenses WHERE DATE(created_at) = ? ORDER BY id DESC");
+                    $stmtDetail->bind_param("s", $tgl);
+                    $stmtDetail->execute();
+                    $resultDetail = $stmtDetail->get_result();
 
-                    while ($detail = mysqli_fetch_assoc($resultDetail)):
+                    while ($detail = $resultDetail->fetch_assoc()):
                       $waktu = date("H:i", strtotime($detail['created_at']));
                   ?>
                     <tr class="hover:bg-slate-50 transition">
