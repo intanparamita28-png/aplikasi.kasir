@@ -46,16 +46,17 @@ if ($resTrx && mysqli_num_rows($resTrx) > 0) {
     while ($row = mysqli_fetch_assoc($resTrx)) {
         $trxId = $row['id'];
         $items = [];
-        $queryDetail = "SELECT td.*, p.name as product_name 
-                        FROM transaction_details td 
-                        LEFT JOIN products p ON td.product_id = p.id 
-                        WHERE td.transaction_id = '$trxId'";
-        $resDetail = mysqli_query($conn, $queryDetail);
-        if ($resDetail) {
-            while ($d = mysqli_fetch_assoc($resDetail)) {
-                $items[] = $d;
-            }
+        $stmtDetail = $conn->prepare("SELECT td.*, p.name as product_name
+                                      FROM transaction_details td
+                                      LEFT JOIN products p ON td.product_id = p.id
+                                      WHERE td.transaction_id = ?");
+        $stmtDetail->bind_param("i", $trxId);
+        $stmtDetail->execute();
+        $resDetail = $stmtDetail->get_result();
+        while ($d = $resDetail->fetch_assoc()) {
+            $items[] = $d;
         }
+        $stmtDetail->close();
         $row['items'] = $items;
         $transactions[] = $row;
     }
@@ -83,18 +84,18 @@ if ($resTrx && mysqli_num_rows($resTrx) > 0) {
     <!-- LEFT SIDEBAR -->
     <aside class="w-20 bg-slate-900 flex flex-col items-center py-6 justify-between shadow-xl z-50 shrink-0 select-none">
       <div class="flex flex-col items-center gap-8 w-full">
-        <a href="/kasir/index.php" title="Halaman Kasir" class="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-slate-900 font-black text-xl shadow-lg shadow-amber-500/30 hover:scale-105 transition cursor-pointer">
+        <a href="index.php" title="Halaman Kasir" class="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-slate-900 font-black text-xl shadow-lg shadow-amber-500/30 hover:scale-105 transition cursor-pointer">
           ☕
         </a>
 
         <nav class="flex flex-col gap-4 w-full px-3">
-          <a href="/kasir/index.php" title="Halaman Kasir" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer block">
+          <a href="index.php" title="Halaman Kasir" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer block">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
           </a>
-          <a href="/kasir/laporan.php" title="Laporan Penjualan" class="p-3 bg-amber-500/20 text-amber-400 rounded-xl transition flex justify-center items-center hover:bg-amber-500/30 cursor-pointer block">
+          <a href="laporan.php" title="Laporan Penjualan" class="p-3 bg-amber-500/20 text-amber-400 rounded-xl transition flex justify-center items-center hover:bg-amber-500/30 cursor-pointer block">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
           </a>
-          <a href="/kasir/produk.php" title="Manajemen Produk" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer block">
+          <a href="produk.php" title="Manajemen Produk" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer block">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
           </a>
         </nav>
@@ -111,7 +112,7 @@ if ($resTrx && mysqli_num_rows($resTrx) > 0) {
           <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Laporan Penjualan & Laba</h1>
           <p class="text-xs text-slate-400 font-medium">Ringkasan riwayat transaksi harian, pendapatan, dan laba kotor.</p>
         </div>
-        <a href="/kasir/index.php" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-amber-600 transition">
+        <a href="index.php" class="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-amber-600 transition">
           ← Kembali ke Kasir
         </a>
       </header>
@@ -194,7 +195,7 @@ if ($resTrx && mysqli_num_rows($resTrx) > 0) {
                       <td class="py-4 px-6 font-extrabold text-slate-900">Rp <?= number_format($trx['total_price'], 0, ',', '.'); ?></td>
                       <td class="py-4 px-6 font-bold text-indigo-600">Rp <?= number_format($trxLaba, 0, ',', '.'); ?></td>
                       <td class="py-4 px-6 text-center">
-                        <button onclick='openDetailModal(<?= json_encode($trx); ?>)' class="px-3 py-1.5 bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-700 font-bold rounded-lg transition text-[11px]">
+                        <button onclick='openDetailModal(<?= htmlspecialchars(json_encode($trx), ENT_QUOTES, "UTF-8"); ?>)' class="px-3 py-1.5 bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-700 font-bold rounded-lg transition text-[11px]">
                           Detail Laba
                         </button>
                       </td>

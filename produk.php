@@ -3,44 +3,56 @@ require_once 'koneksi.php';
 
 // --- LOGIKA FORM HANDLER ---
 $message = '';
+$messageOk = true;
 
 // A. TAMBAH PRODUK
 if (isset($_POST['add_product'])) {
-    $id = mysqli_real_escape_string($conn, $_POST['id']);
-    $name = mysqli_real_escape_string($conn, $_POST['name']);
-    $category = mysqli_real_escape_string($conn, $_POST['category']);
-    $price = (int)$_POST['price'];
-    $stock = (int)$_POST['stock'];
+    $id        = trim($_POST['id'] ?? '');
+    $name      = trim($_POST['name'] ?? '');
+    $category  = $_POST['category'] ?? '';
+    $price     = (int)($_POST['price'] ?? 0);
+    $stock     = (int)($_POST['stock'] ?? 0);
+    // Harga modal wajib ikut disimpan, kalau tidak laporan laba jadi salah.
+    $costPrice = (float)($_POST['cost_price'] ?? 0);
 
-    $query = "INSERT INTO products (id, name, category, price, stock) VALUES ('$id', '$name', '$category', $price, $stock)";
-    if (mysqli_query($conn, $query)) {
+    $stmt = $conn->prepare("INSERT INTO products (id, name, category, price, stock, cost_price) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssiid", $id, $name, $category, $price, $stock, $costPrice);
+    if ($stmt->execute()) {
         $message = "Produk berhasil ditambahkan!";
     } else {
-        $message = "Gagal menambah produk: " . mysqli_error($conn);
+        $message = "Gagal menambah produk: " . $stmt->error;
+        $messageOk = false;
     }
+    $stmt->close();
 }
 
 // B. EDIT PRODUK
 if (isset($_POST['edit_product'])) {
-    $id = mysqli_real_escape_string($conn, $_POST['id']);
-    $name = mysqli_real_escape_string($conn, $_POST['name']);
-    $category = mysqli_real_escape_string($conn, $_POST['category']);
-    $price = (int)$_POST['price'];
-    $stock = (int)$_POST['stock'];
+    $id        = trim($_POST['id'] ?? '');
+    $name      = trim($_POST['name'] ?? '');
+    $category  = $_POST['category'] ?? '';
+    $price     = (int)($_POST['price'] ?? 0);
+    $stock     = (int)($_POST['stock'] ?? 0);
+    $costPrice = (float)($_POST['cost_price'] ?? 0);
 
-    $query = "UPDATE products SET name='$name', category='$category', price=$price, stock=$stock WHERE id='$id'";
-    if (mysqli_query($conn, $query)) {
+    $stmt = $conn->prepare("UPDATE products SET name=?, category=?, price=?, stock=?, cost_price=? WHERE id=?");
+    $stmt->bind_param("ssiids", $name, $category, $price, $stock, $costPrice, $id);
+    if ($stmt->execute()) {
         $message = "Data produk berhasil diperbarui!";
     } else {
-        $message = "Gagal memperbarui produk: " . mysqli_error($conn);
+        $message = "Gagal memperbarui produk: " . $stmt->error;
+        $messageOk = false;
     }
+    $stmt->close();
 }
 
 // C. HAPUS PRODUK
 if (isset($_GET['delete'])) {
-    $id = mysqli_real_escape_string($conn, $_GET['delete']);
-    mysqli_query($conn, "DELETE FROM products WHERE id='$id'");
-    header("Location: /kasir/produk.php");
+    $stmt = $conn->prepare("DELETE FROM products WHERE id = ?");
+    $stmt->bind_param("s", $_GET['delete']);
+    $stmt->execute();
+    $stmt->close();
+    header("Location: produk.php");
     exit;
 }
 
@@ -67,24 +79,24 @@ $products = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
     <aside class="w-20 bg-slate-900 flex flex-col items-center py-6 justify-between shadow-xl z-30 shrink-0 select-none">
       <div class="flex flex-col items-center gap-8 w-full">
         <!-- Logo Home -->
-        <a href="/kasir/index.php" title="Halaman Kasir" class="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-slate-900 font-black text-xl shadow-lg shadow-amber-500/30 hover:scale-105 transition cursor-pointer">
+        <a href="index.php" title="Halaman Kasir" class="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-slate-900 font-black text-xl shadow-lg shadow-amber-500/30 hover:scale-105 transition cursor-pointer">
           ☕
         </a>
 
         <!-- Navigation Links -->
         <nav class="flex flex-col gap-4 w-full px-3">
           <!-- 1. Kasir -->
-          <a href="/kasir/index.php" title="Halaman Kasir" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer">
+          <a href="index.php" title="Halaman Kasir" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
           </a>
 
           <!-- 2. Laporan -->
-          <a href="/kasir/laporan.php" title="Laporan Penjualan" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer">
+          <a href="laporan.php" title="Laporan Penjualan" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
           </a>
 
           <!-- 3. Produk (Aktif) -->
-          <a href="/kasir/produk.php" title="Manajemen Produk" class="p-3 bg-amber-500/20 text-amber-400 rounded-xl transition flex justify-center items-center cursor-pointer">
+          <a href="produk.php" title="Manajemen Produk" class="p-3 bg-amber-500/20 text-amber-400 rounded-xl transition flex justify-center items-center cursor-pointer">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
           </a>
         </nav>
@@ -109,9 +121,9 @@ $products = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
 
       <!-- Alert Notification -->
       <?php if ($message): ?>
-        <div class="mx-8 mt-4 p-3 bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex justify-between items-center">
-          <span><?= $message; ?></span>
-          <button onclick="this.parentElement.remove()" class="text-emerald-500 font-black">✕</button>
+        <div class="mx-8 mt-4 p-3 <?= $messageOk ? 'bg-emerald-100 border-emerald-200 text-emerald-800' : 'bg-rose-100 border-rose-200 text-rose-800' ?> border text-xs font-bold rounded-xl flex justify-between items-center">
+          <span><?= htmlspecialchars($message); ?></span>
+          <button onclick="this.parentElement.remove()" class="font-black opacity-60 hover:opacity-100">✕</button>
         </div>
       <?php endif; ?>
 
@@ -125,6 +137,7 @@ $products = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
                 <th class="py-4 px-6">Nama Menu</th>
                 <th class="py-4 px-6">Kategori</th>
                 <th class="py-4 px-6">Harga</th>
+                <th class="py-4 px-6">Modal</th>
                 <th class="py-4 px-6">Stok Sisa</th>
                 <th class="py-4 px-6 text-center">Aksi</th>
               </tr>
@@ -141,6 +154,10 @@ $products = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
                       </span>
                     </td>
                     <td class="py-4 px-6 font-black text-amber-600">Rp <?= number_format($p['price'], 0, ',', '.'); ?></td>
+                    <td class="py-4 px-6 <?= $p['cost_price'] > 0 ? 'text-slate-500' : 'text-rose-600 font-bold' ?>">
+                      Rp <?= number_format($p['cost_price'], 0, ',', '.'); ?>
+                      <?= $p['cost_price'] > 0 ? '' : ' ⚠️'; ?>
+                    </td>
                     <td class="py-4 px-6">
                       <?php if ($p['stock'] > 10): ?>
                         <span class="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-lg text-xs font-bold"><?= $p['stock']; ?> unit</span>
@@ -151,14 +168,14 @@ $products = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
                       <?php endif; ?>
                     </td>
                     <td class="py-4 px-6 text-center space-x-2">
-                      <button onclick='openModal("edit", <?= json_encode($p); ?>)' class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition">Edit</button>
-                      <a href="/kasir/produk.php?delete=<?= $p['id']; ?>" onclick="return confirm('Yakin ingin menghapus menu ini?')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold transition">Hapus</a>
+                      <button onclick='openModal("edit", <?= htmlspecialchars(json_encode($p), ENT_QUOTES, "UTF-8"); ?>)' class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold transition">Edit</button>
+                      <a href="produk.php?delete=<?= urlencode($p['id']); ?>" onclick="return confirm('Yakin ingin menghapus menu ini?')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg font-bold transition">Hapus</a>
                     </td>
                   </tr>
                 <?php endwhile; ?>
               <?php else: ?>
                 <tr>
-                  <td colspan="6" class="text-center py-8 text-slate-400">Belum ada produk tersimpan di database.</td>
+                  <td colspan="7" class="text-center py-8 text-slate-400">Belum ada produk tersimpan di database.</td>
                 </tr>
               <?php endif; ?>
             </tbody>
@@ -174,7 +191,7 @@ $products = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
     <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
       <h3 id="modal-title" class="text-lg font-extrabold text-slate-900 mb-4">Tambah Menu Baru</h3>
       
-      <form method="POST" action="/kasir/produk.php" class="space-y-4">
+      <form method="POST" action="produk.php" class="space-y-4">
         <input type="hidden" name="add_product" id="form-action-add" value="1">
         <input type="hidden" name="edit_product" id="form-action-edit" value="1" disabled>
 
@@ -203,9 +220,15 @@ $products = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
           </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Stok Awal / Sisa</label>
-          <input type="number" name="stock" id="field-stock" required placeholder="20" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-amber-500 outline-none">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Harga Modal (Rp)</label>
+            <input type="number" name="cost_price" id="field-cost_price" required placeholder="12000" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-amber-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Stok Awal / Sisa</label>
+            <input type="number" name="stock" id="field-stock" required placeholder="20" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs font-bold focus:ring-2 focus:ring-amber-500 outline-none">
+          </div>
         </div>
 
         <div class="flex gap-3 pt-2">
@@ -238,6 +261,7 @@ $products = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
         document.getElementById("field-name").value = data.name;
         document.getElementById("field-category").value = data.category;
         document.getElementById("field-price").value = data.price;
+        document.getElementById("field-cost_price").value = data.cost_price;
         document.getElementById("field-stock").value = data.stock;
       } else {
         title.innerText = "Tambah Menu Baru";
@@ -251,6 +275,7 @@ $products = mysqli_query($conn, "SELECT * FROM products ORDER BY id DESC");
         document.getElementById("field-name").value = "";
         document.getElementById("field-category").value = "Minuman";
         document.getElementById("field-price").value = "";
+        document.getElementById("field-cost_price").value = "";
         document.getElementById("field-stock").value = "";
       }
     }

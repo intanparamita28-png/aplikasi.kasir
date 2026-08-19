@@ -15,17 +15,19 @@ if ($conn->connect_error) {
 // Penanganan AJAX Simpan Pengeluaran (Terhubung dengan Modal)
 // -------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_expense') {
-    $title  = mysqli_real_escape_string($conn, $_POST['title']);
-    $amount = (float)$_POST['amount'];
-    
+    $title  = trim($_POST['title'] ?? '');
+    $amount = (float)($_POST['amount'] ?? 0);
+
     // Simpan ke tabel expenses
-    $sql = "INSERT INTO expenses (title, amount, created_at) VALUES ('$title', '$amount', NOW())";
-    
-    if (mysqli_query($conn, $sql)) {
+    $stmt = $conn->prepare("INSERT INTO expenses (title, amount, created_at) VALUES (?, ?, NOW())");
+    $stmt->bind_param("sd", $title, $amount);
+
+    if ($stmt->execute()) {
         echo json_encode(['status' => 'success']);
     } else {
-        echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+        echo json_encode(['status' => 'error', 'message' => $stmt->error]);
     }
+    $stmt->close();
     exit;
 }
 
@@ -119,24 +121,24 @@ $products = !empty($dbProducts) ? $dbProducts : $menuList;
     <!-- LEFT SIDEBAR -->
     <aside class="w-20 bg-slate-900 flex flex-col items-center py-6 justify-between shadow-xl z-50 shrink-0 select-none">
       <div class="flex flex-col items-center gap-8 w-full">
-        <a href="/kasir/index.php" title="Halaman Kasir" class="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-slate-900 font-black text-2xl shadow-lg shadow-amber-500/30 hover:scale-105 transition cursor-pointer">
+        <a href="index.php" title="Halaman Kasir" class="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-slate-900 font-black text-2xl shadow-lg shadow-amber-500/30 hover:scale-105 transition cursor-pointer">
           ☕
         </a>
 
         <nav class="flex flex-col gap-4 w-full px-3">
-          <a href="/kasir/index.php" title="Halaman Kasir" class="p-3 bg-amber-500/20 text-amber-400 rounded-xl transition flex justify-center items-center hover:bg-amber-500/30 cursor-pointer block">
+          <a href="index.php" title="Halaman Kasir" class="p-3 bg-amber-500/20 text-amber-400 rounded-xl transition flex justify-center items-center hover:bg-amber-500/30 cursor-pointer block">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
           </a>
 
-          <a href="/kasir/laporan.php" title="Laporan Penjualan" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer block">
+          <a href="laporan.php" title="Laporan Penjualan" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer block">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
           </a>
 
-          <a href="/kasir/produk.php" title="Manajemen Produk & Stok" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer block">
+          <a href="produk.php" title="Manajemen Produk & Stok" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer block">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
           </a>
 
-          <a href="/kasir/Laporan_pengeluaran.php" title="Laporan Pengeluaran" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer block">
+          <a href="Laporan_pengeluaran.php" title="Laporan Pengeluaran" class="p-3 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition flex justify-center items-center cursor-pointer block">
             <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
           </a>
         </nav>
@@ -195,7 +197,7 @@ $products = !empty($dbProducts) ? $dbProducts : $menuList;
         <div class="grid grid-cols-3 gap-5" id="product-grid">
           <?php foreach ($products as $p): ?>
             <?php $isLowStock = $p['stock'] <= 5; ?>
-            <div onclick='addToCart(<?= json_encode($p); ?>)' 
+            <div onclick='addToCart(<?= htmlspecialchars(json_encode($p), ENT_QUOTES, "UTF-8"); ?>)' 
                  data-name="<?= strtolower(htmlspecialchars($p['name'])); ?>"
                  data-code="<?= strtolower(htmlspecialchars($p['id'])); ?>"
                  data-category="<?= strtolower(htmlspecialchars($p['category'])); ?>"
@@ -330,7 +332,7 @@ $products = !empty($dbProducts) ? $dbProducts : $menuList;
           <span id="change-amount" class="font-extrabold text-sm text-slate-400">Rp 0</span>
         </div>
 
-        <button onclick="processCheckout()" class="w-full bg-slate-900 hover:bg-amber-600 active:scale-[0.98] text-white font-bold py-3 rounded-xl shadow-lg transition-all duration-200 text-sm flex items-center justify-center gap-2">
+        <button id="checkout-btn" onclick="processCheckout()" class="w-full bg-slate-900 hover:bg-amber-600 active:scale-[0.98] text-white font-bold py-3 rounded-xl shadow-lg transition-all duration-200 text-sm flex items-center justify-center gap-2">
           <span>⚡</span> Bayar & Cetak Struk
         </button>
       </div>
@@ -381,6 +383,7 @@ $products = !empty($dbProducts) ? $dbProducts : $menuList;
         <div class="text-center pb-2 border-b border-slate-200">
           <p class="font-bold text-sm text-slate-900">COFFEE SHOP POS</p>
           <p id="receipt-order-info" class="text-xs text-amber-600 font-bold">-</p>
+          <p id="receipt-trx-id" class="text-[10px] text-slate-400 font-bold">-</p>
         </div>
         <div class="text-xs flex justify-between text-slate-500">
           <span id="receipt-date">-</span>
@@ -406,21 +409,32 @@ $products = !empty($dbProducts) ? $dbProducts : $menuList;
   <script>
     let cart = [];
     let currentOrderType = 'dinein';
+    let lastTransactionSaved = false;
     const formatRupiah = (num) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(num);
+
+    // Uang tunai hanya relevan untuk metode "Tunai".
+    // QRIS & Debit selalu terbayar pas, jadi jumlah bayar diambil dari total tagihan.
+    function isCashPayment() {
+      return document.getElementById("payment-method").value === "Tunai";
+    }
+
+    // Satu-satunya sumber perhitungan, dipakai bersama oleh tampilan dan checkout
+    // supaya jumlah bayar tidak pernah basi terhadap isi keranjang.
+    function getTotals() {
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const discPercent = parseFloat(document.getElementById("discount-percent").value) || 0;
+      const discAmount = Math.round(subtotal * (discPercent / 100));
+      const total = Math.max(0, subtotal - discAmount);
+      const pay = isCashPayment()
+        ? (parseFloat(document.getElementById("pay-amount").value) || 0)
+        : total;
+      return { subtotal, discAmount, total, pay, change: pay - total };
+    }
 
     function toggleQrisView() {
       const method = document.getElementById("payment-method").value;
-      const qrisBox = document.getElementById("qris-box");
-      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      const disc = parseFloat(document.getElementById("discount-percent").value) || 0;
-      const total = subtotal - (subtotal * (disc / 100));
-
-      if (method === "QRIS") {
-        qrisBox.classList.remove("hidden");
-        document.getElementById("pay-amount").value = total; 
-      } else {
-        qrisBox.classList.add("hidden");
-      }
+      document.getElementById("qris-box").classList.toggle("hidden", method !== "QRIS");
+      document.getElementById("cash-input-box").classList.toggle("hidden", method !== "Tunai");
       calculateTotal();
     }
 
@@ -441,8 +455,15 @@ $products = !empty($dbProducts) ? $dbProducts : $menuList;
       }
     }
 
-    function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
-    function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (!el) return console.warn(`Modal "${id}" belum tersedia di halaman ini.`);
+      el.classList.remove("hidden");
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.add("hidden");
+    }
 
     async function submitExpense() {
       const title = document.getElementById("exp-title").value.trim();
@@ -454,18 +475,29 @@ $products = !empty($dbProducts) ? $dbProducts : $menuList;
       }
 
       try {
-        await fetch('/kasir/index.php', {
+        const res = await fetch('index.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({ 'action': 'add_expense', 'title': title, 'amount': amount })
         });
+
+        // Balasan server harus benar-benar diperiksa; jangan pernah
+        // melaporkan sukses kalau penyimpanan sebenarnya gagal.
+        const raw = await res.text();
+        let result;
+        try {
+          result = JSON.parse(raw);
+        } catch {
+          throw new Error(`Server tidak membalas JSON (HTTP ${res.status}):\n\n${raw.slice(0, 400)}`);
+        }
+        if (result.status !== 'success') throw new Error(result.message || 'Ditolak server.');
+
         document.getElementById("exp-title").value = "";
         document.getElementById("exp-amount").value = "";
         closeModal('expense-modal');
         alert("✅ Pengeluaran berhasil dicatat!");
       } catch (error) {
-        alert("✅ Catatan pengeluaran disimpan!");
-        closeModal('expense-modal');
+        alert("❌ Pengeluaran GAGAL disimpan.\n\n" + error.message);
       }
     }
 
@@ -516,21 +548,13 @@ $products = !empty($dbProducts) ? $dbProducts : $menuList;
     }
 
     function setQuickCash(val) {
-      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      const disc = parseFloat(document.getElementById("discount-percent").value) || 0;
-      const total = subtotal - (subtotal * (disc / 100));
-
+      const { total } = getTotals();
       document.getElementById("pay-amount").value = val === 'pas' ? total : val;
       calculateTotal();
     }
 
     function calculateTotal() {
-      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      const discPercent = parseFloat(document.getElementById("discount-percent").value) || 0;
-      const discAmount = subtotal * (discPercent / 100);
-      const total = Math.max(0, subtotal - discAmount);
-      const pay = parseFloat(document.getElementById("pay-amount").value) || 0;
-      const change = pay - total;
+      const { subtotal, discAmount, total, change } = getTotals();
 
       document.getElementById("subtotal-price").innerText = formatRupiah(subtotal);
       document.getElementById("discount-amount").innerText = "- " + formatRupiah(discAmount);
@@ -572,16 +596,17 @@ $products = !empty($dbProducts) ? $dbProducts : $menuList;
       calculateTotal();
     }
 
-    function processCheckout() {
+    async function processCheckout() {
       if (cart.length === 0) return alert("Keranjang belanja masih kosong!");
 
-      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-      const discPercent = parseFloat(document.getElementById("discount-percent").value) || 0;
-      const discAmount = subtotal * (discPercent / 100);
-      const total = subtotal - discAmount;
-      const pay = parseFloat(document.getElementById("pay-amount").value) || 0;
+      const { subtotal, discAmount, total, pay, change } = getTotals();
 
-      if (pay < total) return alert("Uang pembayaran kurang!");
+      // Uang bayar hanya dicek untuk pembayaran tunai.
+      if (isCashPayment() && pay < total) return alert("Uang pembayaran kurang!");
+
+      // Simpan dulu ke database; struk baru dicetak kalau benar-benar tersimpan.
+      const saved = await saveTransaction({ total, pay, change });
+      if (!saved) return;
 
       const infoVal = document.getElementById("order-info").value.trim() || (currentOrderType === 'dinein' ? 'Dine-In' : 'Takeaway');
       const methodVal = document.getElementById("payment-method").value;
@@ -601,14 +626,61 @@ $products = !empty($dbProducts) ? $dbProducts : $menuList;
       document.getElementById("receipt-discount").innerText = "- " + formatRupiah(discAmount);
       document.getElementById("receipt-total").innerText = formatRupiah(total);
       document.getElementById("receipt-pay").innerText = formatRupiah(pay);
-      document.getElementById("receipt-change").innerText = formatRupiah(pay - total);
+      document.getElementById("receipt-change").innerText = formatRupiah(change);
 
       openModal("receipt-modal");
+    }
+
+    // Kirim transaksi ke server. Mengembalikan true kalau tersimpan.
+    // Pesan galat dari PHP/MySQL ditampilkan apa adanya supaya mudah dilacak.
+    async function saveTransaction({ total, pay, change }) {
+      const btn = document.getElementById("checkout-btn");
+      const label = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "<span>⏳</span> Menyimpan...";
+
+      try {
+        const res = await fetch("simpan_transaksi.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            total_price: total,
+            pay_amount: pay,
+            change_amount: change,
+            payment_method: document.getElementById("payment-method").value,
+            items: cart.map(i => ({ id: i.id, qty: i.qty, price: i.price }))
+          })
+        });
+
+        const raw = await res.text();
+        let result;
+        try {
+          result = JSON.parse(raw);
+        } catch {
+          throw new Error(`Server tidak membalas JSON (HTTP ${res.status}):\n\n${raw.slice(0, 400)}`);
+        }
+        if (!result.success) throw new Error(result.message || "Transaksi ditolak server.");
+
+        lastTransactionSaved = true;
+        document.getElementById("receipt-trx-id").innerText = "No. Transaksi " + result.transaction_id;
+        return true;
+      } catch (err) {
+        alert("❌ Transaksi GAGAL disimpan.\n\n" + err.message);
+        return false;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = label;
+      }
     }
 
     function closeReceiptModal() {
       closeModal("receipt-modal");
       clearCart();
+      // Muat ulang supaya sisa stok di katalog ikut ter-update dari database.
+      if (lastTransactionSaved) {
+        lastTransactionSaved = false;
+        location.reload();
+      }
     }
   </script>
 </body>
